@@ -21,12 +21,12 @@ Output: `hoofprint.yaml` + a migration report listing what mapped, what was appr
 | Template               | Template (v2)                     | inlined on import, flagged |
 | Policy (OPA)           | Policy gate (v2)                  | flagged |
 | Continuous Verification| Verify stage                      | Prom queries carry over |
-| Delegate               | Agent (v2)                        | see ADR-0004 |
+| Delegate               | hoofprint-agent                   | 1:1, selectors → tags |
 
 ## Phasing
 - **M1**: importer for CI stages + triggers + connectors. Report flags everything else.
 - **M2**: deploy stages for k8s. Service object added to spec.
-- **v2 (post-launch)**: approvals, templates, policy gates, delegate/agent, non-k8s targets (Helm, ECS, Lambda, SSH, Terraform).
+- **v2 (post-launch)**: approvals, templates, policy gates, non-k8s targets (Helm, ECS, Lambda, SSH, Terraform).
 
 ## Positioning
 Two segments, two pitches:

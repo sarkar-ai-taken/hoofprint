@@ -32,7 +32,13 @@ Platform / DevOps engineer at a 20–500 engineer company running Kubernetes, cu
 - Tier 2: LLM agent that reads the diff, the deploy logs, the metric deltas, and the traces, and produces a verdict with a written rationale. Human-in-the-loop by default; auto-rollback opt-in.
 - Verdicts are stored, auditable, and shown in the UI next to the deploy.
 
+### Delegate
+- `hoofprint-agent` runs in each target cluster, connects outbound to the control plane. Control plane needs no inbound access. See ADR-0004.
+- Agents tagged and selected per environment.
+- UI shows agent fleet: online/offline, version, last heartbeat.
+
 ### UI
+- Agent fleet view.
 - Pipelines list + run detail with live logs.
 - Environments view: what version is where, promotion buttons.
 - Deploy detail: strategy progress, verification verdict, rollback button.
