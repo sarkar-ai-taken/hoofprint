@@ -27,6 +27,7 @@ Planning. See [`docs/`](docs/) for the spec, architecture, roadmap, and decision
 - [Product spec (v1)](docs/SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Harness migration track](docs/MIGRATION.md)
 - [Decision records](docs/adr/)
 - [Open questions](docs/OPEN_QUESTIONS.md)
 

@@ -6,13 +6,15 @@ Solo-dev estimates. Each milestone ends in something runnable on a kind cluster.
 - [ ] Repo scaffold, Go module, Helm chart skeleton, kind dev script
 - [ ] `hoofprint.yaml` schema v0 + parser + validator
 - [ ] Postgres schema: projects, pipelines, runs
-- [ ] ADRs 0001–0003 accepted
+- [ ] ADRs 0001–0004 accepted
+- [ ] `Executor` interface in place (ADR-0004)
 
 ## M1 — Pipelines run (weeks 3–5)
 - [ ] Compile spec → Tekton PipelineRun
 - [ ] GitHub webhook trigger (push, PR)
 - [ ] Log streaming API
 - [ ] CLI: `init`, `run`, `status`
+- [ ] `hoofprint import harness` — CI stages, triggers, connectors (see MIGRATION.md)
 - [ ] UI: pipelines list, run detail with live logs
 - **Demo:** push to sample repo → build + test runs → logs in UI
 
@@ -22,6 +24,7 @@ Solo-dev estimates. Each milestone ends in something runnable on a kind cluster.
 - [ ] Argo CD app bootstrap per environment
 - [ ] UI: environments view, deploy detail
 - [ ] CLI: `deploy`, `rollback`
+- [ ] Importer: k8s deploy stages + Service object
 - **Demo:** canary deploy of sample app, promoted to prod via UI
 
 ## M3 — Verification tier 1 (weeks 9–11)
@@ -44,6 +47,9 @@ Solo-dev estimates. Each milestone ends in something runnable on a kind cluster.
 - [ ] Sample repo, screencast
 - [ ] HN / r/devops / CNCF Slack launch
 - **Target:** 3 external teams on a real cluster
+
+## v2 — Harness enterprise parity
+Approvals (Jira/ServiceNow) · templates · OPA policy gates · hoofprint-agent (ADR-0004) · Helm/ECS/Lambda/SSH/Terraform targets
 
 ## Later
 Feature flags · cost · chaos · VM/serverless targets · hosted control plane · enterprise tier
