@@ -1,30 +1,38 @@
 # Hoofprint
 
-**Open-source software delivery platform.** One pipeline model, one UI, from commit to verified production deploy.
+**The deploy gate for code nobody read.**
 
-Hoofprint stitches the best open-source delivery components into a single opinionated platform, and adds the thing none of them have: a verification layer that reasons about a deploy, not just thresholds it.
+Agents write code faster than humans can review it. Hoofprint sits between merge and production: it watches the canary, reads the diff, correlates logs, traces, and metrics, writes a verdict a human can understand, and rolls back on its own when the change is bad.
 
-## Why
+Open source. Works on top of the Argo CD you already run. Grows into a full delivery platform when you want one.
 
-Harness.io sells integration, not components. Every piece of a modern delivery platform already exists in open source, but nobody has made them feel like one product:
+## The problem
 
-| Capability        | Harness module         | Hoofprint builds on       |
-|-------------------|------------------------|---------------------------|
-| CI                | Harness CI (Drone)     | Tekton or Drone fork      |
-| CD / GitOps       | Harness CD             | Argo CD + Argo Rollouts   |
-| Verification      | Continuous Verification| Prometheus/OTel + LLM agent (the moat) |
-| UI                | Harness Platform       | Hoofprint UI              |
-| Feature flags     | Harness FF             | deferred (Flagsmith)      |
-| Cost              | Harness CCM            | deferred (OpenCost)       |
-| Chaos             | Harness CE             | deferred (Litmus)         |
+PR volume is up 5–10× on teams using coding agents. Most of that code has had at most a skim from a human. Metrics-threshold canary analysis (Harness CV, Argo Rollouts analysis, Flagger) answers "did p99 go up?" but not "is this change wrong, and why?" When something breaks at 3am, nobody on call understands the diff.
 
-## Status
+## What Hoofprint does
 
-Planning. See [`docs/`](docs/) for the spec, architecture, roadmap, and decision log.
+1. **Watches** every Argo Rollout canary in your cluster via a lightweight agent.
+2. **Gathers evidence**: the git diff, deploy logs, metric deltas vs baseline, trace samples, k8s events.
+3. **Judges**: statistical canary comparison first, then an LLM verdict with a written rationale and evidence links.
+4. **Acts**: pauses promotion, pings the author with the rationale, and rolls back automatically when confidence is high.
+
+## Positioning
+
+| | Harness CV / Flagger / Argo analysis | Hoofprint |
+|---|---|---|
+| Input | metric thresholds | diff + logs + traces + metrics |
+| Output | pass/fail | verdict + rationale + evidence |
+| Install | replace your CD | sits on your existing Argo |
+| License | commercial / OSS | Apache-2.0 |
+
+## Roadmap in one line
+
+v0: verification gate on existing Argo → v1: full pipelines + deploys with the same agent → v2: governance, Harness import parity.
 
 ## Docs
 
-- [Product spec (v1)](docs/SPEC.md)
+- [Product spec](docs/SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Harness migration track](docs/MIGRATION.md)

@@ -1,18 +1,32 @@
 # Hoofprint v1 — Product Spec
 
 ## One-liner
-An open-source Harness alternative: a single pipeline model and UI over open components, with agent-driven deploy verification.
+The deploy gate for code nobody read: agent-driven verification of every canary, on top of the Argo CD you already run, growing into a full open-source delivery platform.
 
 ## Target user
-Platform / DevOps engineer at a 20–500 engineer company running Kubernetes, currently gluing together Argo CD + GitHub Actions + Grafana by hand, who has looked at Harness and balked at the price or the lock-in.
+Platform / DevOps engineer at a 20–500 engineer company on Kubernetes + Argo, whose team has adopted coding agents and whose PR volume now outruns human review. Secondary: the same person evaluating Harness and balking at price or lock-in.
 
 ## Jobs to be done
-1. Define a pipeline once (build → test → deploy → verify) in one YAML file, run it on any Git event.
-2. Deploy to Kubernetes with a canary or blue/green strategy without writing Argo Rollouts manifests by hand.
-3. Know, automatically, whether a deploy is healthy, and roll back when it isn't, without hand-tuning thresholds.
-4. See every pipeline, environment, and deploy in one place.
+1. Know, for every deploy, whether the change is bad and *why*, in language the on-call can act on, without hand-tuning thresholds.
+2. Roll back automatically when the evidence is strong, pause and ask a human when it isn't.
+3. Adopt this without replacing the CD system already in place.
+4. (v1) Define a pipeline once, deploy with canary/blue-green, see everything in one place.
 
-## v1 scope (in)
+## Why now
+Coding agents have multiplied PR volume while review depth has fallen. Existing canary analysis (Harness CV, Flagger, Argo analysis templates) compares metrics to thresholds and says pass/fail; none of it reads the diff or explains itself. The gate between merge and production is the new bottleneck.
+
+## v0 scope (in) — ships first
+### Verification gate
+- Agent watches Argo Rollouts in the cluster; no Hoofprint pipelines required.
+- Evidence: git diff, pod logs, k8s events, Prometheus canary-vs-baseline, OTel trace samples.
+- Tier 1 judge: statistical canary comparison, in Go.
+- Tier 2 judge: LLM verdict `{pass|fail|unsure, confidence, rationale, evidence[]}`, model backend pluggable.
+- Actions: pause rollout, comment on PR, Slack, auto-abort (opt-in, confidence-gated).
+- Verdicts and evidence bundles persisted and auditable.
+- Delegate architecture from day one (ADR-0004).
+- Minimal UI: rollouts, verdicts, agent fleet. OIDC + project RBAC.
+
+## v1 scope (in) — delivery platform
 ### Pipeline engine
 - Single YAML spec (`hoofprint.yaml`) covering stages, steps, triggers, environments.
 - Steps run as containers. Any OCI image is a step; plugin ecosystem = container images (Drone model).
@@ -54,11 +68,16 @@ Feature flags, cloud cost management, chaos engineering, non-Kubernetes targets 
 - Replacing Argo CD or Tekton. We build on them, we don't fork them unless forced.
 - Being a Git host.
 
+## Success criteria for v0
+- Install on an existing Argo cluster in under 20 minutes, no pipeline changes.
+- On the eval set of 30 synthetic regressions: ≥90% recall, ≥80% precision, verdict within 5 minutes of canary start.
+- Rationale names the offending diff hunk in ≥70% of logic/config regressions.
+- 5 external teams running it; one recorded real catch.
+
 ## Success criteria for v1
-- A new user goes from `git clone` of the sample repo to a verified canary deploy on a kind cluster in under 30 minutes.
-- Verification catches an injected latency regression in the sample app and rolls back without human input.
-- 3 external teams running it on a real cluster.
+- Clone-to-verified-canary on kind in under 30 minutes.
+- 3 teams using Hoofprint pipelines, not just the gate.
 
 ## Business model (open core)
-- Core: Apache-2.0, everything above.
-- Enterprise (later): SSO/SCIM, audit log export, policy-as-code gates, SLA support, hosted control plane.
+- Core: Apache-2.0, everything above, including the LLM judge (bring your own model key).
+- Paid (later): hosted control plane with managed model, SSO/SCIM, audit export, policy gates, SLA support.
