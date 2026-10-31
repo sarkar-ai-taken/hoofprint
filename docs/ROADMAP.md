@@ -2,19 +2,20 @@
 
 Solo-dev estimates. Re-cut around verification as the product; the delivery platform follows.
 
-## v0 — Verification gate on existing Argo
+## v0 — Verification gate on any Kubernetes cluster
 
 ### M0 — Foundation (weeks 1–2)
 - [ ] Repo scaffold, Go module, Helm chart skeleton, kind dev script with Argo CD + Rollouts + Prometheus preinstalled
 - [ ] Postgres schema: clusters, agents, rollouts, verdicts, evidence
 - [ ] gRPC agent protocol: register, heartbeat, work stream (ADR-0004)
-- [ ] `hoofprint-agent` skeleton: connects, registers, lists Argo Rollouts in its cluster
+- [ ] `hoofprint-agent` skeleton: connects, registers, lists workloads + detects Rollouts/Flagger presence
 - [ ] Sample app with injectable latency/error/memory regressions
 
 ### M1 — Evidence + statistical verdict (weeks 3–6)
-- [ ] Agent watches Rollout canary steps, emits `RolloutStarted/Paused/Promoted/Aborted`
-- [ ] Evidence collectors on agent: Prometheus (canary vs baseline), k8s events, pod logs (Loki or direct), OTel trace samples
-- [ ] Git diff fetch (GitHub app) for the commit range in the rollout
+- [ ] Workload watcher (tier 1): informers on Deployments/StatefulSets/DaemonSets, emits `DeployEvent` on pod-template change
+- [ ] Rollouts + Flagger watcher (tier 2): canary step events, baseline/canary pod selection
+- [ ] Evidence collectors on agent: Prometheus (pre/post window for tier 1, canary vs baseline for tier 2), k8s events, pod logs (Loki or direct), OTel trace samples
+- [ ] Image tag → commit SHA resolution; git diff fetch (GitHub app) for the commit range
 - [ ] Tier 1 judge: Mann-Whitney canary comparison over declared metrics, in Go
 - [ ] Verdict stored with evidence bundle
 - [ ] CLI: `hoofprint verdicts`, `hoofprint explain <rollout>`
@@ -23,16 +24,16 @@ Solo-dev estimates. Re-cut around verification as the product; the delivery plat
 ### M2 — LLM verdict + action (weeks 7–10)
 - [ ] Evidence bundle → prompt builder, pluggable model backend (Anthropic, OpenAI-compatible, local)
 - [ ] Verdict: `{pass|fail|unsure, confidence, rationale, evidence[]}`
-- [ ] Actions: pause Rollout, post rationale to PR + Slack, auto-abort when confidence ≥ threshold (opt-in)
+- [ ] Actions: post rationale to PR + Slack (all tiers); pause/abort Rollout or Flagger canary (tier 2); `rollout undo` (tier 1, opt-in); all auto-actions confidence-gated
 - [ ] Eval set: 30 synthetic regressions across latency/errors/memory/config/logic; measure precision, recall, time-to-verdict
 - [ ] UI v0: rollouts list, verdict detail with evidence, agent fleet
 - **Demo:** agent-written PR with a subtle bug → canary → Hoofprint explains the bug in prose, links the diff line, rolls back
 
 ### M3 — Launch v0 (weeks 11–12)
 - [ ] OIDC auth, project-level RBAC
-- [ ] Docs, 20-minute quickstart on kind, screencast
+- [ ] Docs, 20-minute quickstart on kind (two paths: plain Deployments, and Argo Rollouts), screencast
 - [ ] Launch: HN, r/devops, Argo community, CNCF Slack
-- **Target:** 5 teams running it against real Argo installs; 1 recorded "it caught something" story
+- **Target:** 5 teams on real clusters, at least 2 without Rollouts; 1 recorded "it caught something" story
 
 ## v1 — Delivery platform (weeks 13–26)
 Same agent, now executes work too.

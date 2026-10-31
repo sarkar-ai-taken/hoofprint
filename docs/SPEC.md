@@ -1,15 +1,15 @@
 # Hoofprint v1 — Product Spec
 
 ## One-liner
-The deploy gate for code nobody read: agent-driven verification of every canary, on top of the Argo CD you already run, growing into a full open-source delivery platform.
+The deploy gate for code nobody read: agent-driven verification of every deploy on any Kubernetes cluster, whatever deployed it, growing into a full open-source delivery platform.
 
 ## Target user
-Platform / DevOps engineer at a 20–500 engineer company on Kubernetes + Argo, whose team has adopted coding agents and whose PR volume now outruns human review. Secondary: the same person evaluating Harness and balking at price or lock-in.
+Platform / DevOps engineer at a 20–500 engineer company on Kubernetes, whose team has adopted coding agents and whose PR volume now outruns human review. Secondary: the same person evaluating Harness and balking at price or lock-in.
 
 ## Jobs to be done
 1. Know, for every deploy, whether the change is bad and *why*, in language the on-call can act on, without hand-tuning thresholds.
 2. Roll back automatically when the evidence is strong, pause and ask a human when it isn't.
-3. Adopt this without replacing the CD system already in place.
+3. Adopt this without replacing or reconfiguring the CD system already in place.
 4. (v1) Define a pipeline once, deploy with canary/blue-green, see everything in one place.
 
 ## Why now
@@ -17,7 +17,15 @@ Coding agents have multiplied PR volume while review depth has fallen. Existing 
 
 ## v0 scope (in) — ships first
 ### Verification gate
-- Agent watches Argo Rollouts in the cluster; no Hoofprint pipelines required.
+Three integration tiers; the agent detects which applies per workload.
+
+| Tier | Trigger | Comparison | Actions |
+|---|---|---|---|
+| 1. Any k8s workload | Deployment / StatefulSet / DaemonSet pod-template change, whatever applied it (Argo CD, Flux, Helm, kubectl, CI) | pre-window vs post-window on the same workload | verdict, PR comment, Slack; optional `kubectl rollout undo` (opt-in) |
+| 2. Progressive delivery | Argo Rollouts or Flagger canary step | canary vs baseline, side by side | + pause, promote, abort |
+| 3. Hoofprint pipelines (v1) | Hoofprint deploy stage | as tier 2 | full control, gate is a pipeline step |
+
+- Code-side: image tag → commit range via GitHub (v0), GitLab (v0 if time, else M3 follow-up). Requires the image tag or label to carry the SHA; documented convention plus a fallback to the registry's OCI annotations.
 - Evidence: git diff, pod logs, k8s events, Prometheus canary-vs-baseline, OTel trace samples.
 - Tier 1 judge: statistical canary comparison, in Go.
 - Tier 2 judge: LLM verdict `{pass|fail|unsure, confidence, rationale, evidence[]}`, model backend pluggable.
@@ -69,10 +77,10 @@ Feature flags, cloud cost management, chaos engineering, non-Kubernetes targets 
 - Being a Git host.
 
 ## Success criteria for v0
-- Install on an existing Argo cluster in under 20 minutes, no pipeline changes.
+- Install on any existing Kubernetes cluster in under 20 minutes, no pipeline or CD changes.
 - On the eval set of 30 synthetic regressions: ≥90% recall, ≥80% precision, verdict within 5 minutes of canary start.
 - Rationale names the offending diff hunk in ≥70% of logic/config regressions.
-- 5 external teams running it; one recorded real catch.
+- 5 external teams running it, at least 2 without Argo Rollouts; one recorded real catch.
 
 ## Success criteria for v1
 - Clone-to-verified-canary on kind in under 30 minutes.

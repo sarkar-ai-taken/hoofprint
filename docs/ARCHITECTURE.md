@@ -19,8 +19,8 @@
               ┌────────────────┼────────────────┐
               ▼                ▼                ▼
       ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐
-      │ Tekton       │ │ Argo CD +    │ │ Prometheus · OTel│
-      │ (CI steps)   │ │ Argo Rollouts│ │ Loki · k8s events│
+      │ Tekton       │ │ k8s API +    │ │ Prometheus · OTel│
+      │ (CI steps)   │ │ Rollouts/Flagger│ │ Loki · k8s events│
       └──────────────┘ └──────────────┘ └──────────────────┘
 ```
 
@@ -32,7 +32,8 @@
 
 ### hoofprint-agent (delegate)
 - Go, static binary, Helm chart. One per cluster. See ADR-0004.
-- Outbound-only gRPC stream to the control plane. Pulls work, executes against local Tekton / Argo / Prometheus, streams results back.
+- Outbound-only gRPC stream to the control plane. Pulls work, executes against local k8s API / Rollouts / Flagger / Tekton / Prometheus, streams results back.
+- Workload watcher: informers on Deployments, StatefulSets, DaemonSets, Rollouts, Flagger Canaries. Emits a `DeployEvent` on pod-template change with the detected tier.
 - Capabilities advertised at registration; control plane routes work accordingly.
 
 ### hoofprint-verify
@@ -48,7 +49,7 @@
 - Go, same module as api. Thin client over the API.
 
 ## Key design rules
-1. Hoofprint never bypasses Argo. Desired state goes to Git or the Argo API; Argo reconciles.
+1. Hoofprint never fights the CD tool. In tiers 1–2 it observes and, where allowed, acts through that tool's own control points (Rollout pause/abort, Flagger, `rollout undo`). In v1 desired state goes to Git or the Argo API; Argo reconciles.
 2. Everything in `hoofprint.yaml` must be expressible without the UI. UI is a view, not a source of truth.
 3. Verification sources and the model backend are plugins behind interfaces from day one.
 4. One umbrella Helm install for the quickstart (control plane + agent in one cluster). No "install these six things first."
