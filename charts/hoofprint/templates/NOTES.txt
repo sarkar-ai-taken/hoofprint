@@ -1,0 +1,18 @@
+Hoofprint {{ .Chart.AppVersion }} installed in namespace {{ .Release.Namespace }}.
+
+{{- if .Values.api.enabled }}
+
+Control plane:
+  HTTP API : {{ include "hoofprint.fullname" . }}-api:{{ .Values.api.service.httpPort }}
+  Agent gRPC: {{ include "hoofprint.fullname" . }}-api:{{ .Values.api.service.grpcPort }}
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "hoofprint.fullname" . }}-api 8080:{{ .Values.api.service.httpPort }}
+  hoofprint agents
+{{- end }}
+{{- if .Values.agent.enabled }}
+
+Agent "{{ .Values.agent.cluster }}" connects outbound to {{ include "hoofprint.controlPlane" . }}.
+Check it registered:  hoofprint agents
+{{- end }}
+
+Store: {{ include "hoofprint.databaseURL" . | replace .Values.postgres.password "***" }}

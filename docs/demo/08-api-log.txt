@@ -1,0 +1,4 @@
+msg="deploy observed" deploy=b097d386-ae9c-4973-bc87-8ee1eaeb5990 cluster=kind-hoofprint ns=sample kind=Deployment name=sample-app tier=workload rev=3140f8e..9b1d3a7
+msg="verification scheduled" deploy=b097d386-ae9c-4973-bc87-8ee1eaeb5990 workload=sample/sample-app verdict_in=1m23s
+msg="deploy observed" deploy=2d8ced49-7388-4fbd-9815-868d58b39e34 cluster=kind-hoofprint ns=sample kind=Deployment name=sample-app tier=workload rev=9b1d3a7..c47e2f0
+msg="verification scheduled" deploy=2d8ced49-7388-4fbd-9815-868d58b39e34 workload=sample/sample-app verdict_in=1m23s

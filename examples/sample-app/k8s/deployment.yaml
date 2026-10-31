@@ -1,0 +1,110 @@
+# Tier 1 path: a plain Deployment. Any change to the pod template below
+# (image tag, env) is a deploy Hoofprint observes.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sample
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+  namespace: sample
+  labels:
+    app: sample-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+      annotations:
+        # Scraped by the kube-prometheus-stack default config in hack/kind-up.sh
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        # Hoofprint reads the git revision from the image tag (sha-<7..40 hex>),
+        # or from a hoofprint.dev/revision / org.opencontainers.image.revision
+        # annotation here, or from the app.kubernetes.io/version label.
+    spec:
+      containers:
+        - name: app
+          # Tag convention: the git SHA in the tag is how Hoofprint links a
+          # deploy to a commit range. hack/demo.sh tags the dev image this way.
+          image: hoofprint/sample-app:sha-3140f8e
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: APP_VERSION
+              value: "v1"
+            # Flip these to inject a regression via a plain deploy:
+            - name: INJECT_LATENCY_MS
+              value: "0"
+            - name: INJECT_ERROR_RATE
+              value: "0"
+            - name: INJECT_LEAK_MB_PER_MIN
+              value: "0"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-app
+  namespace: sample
+  labels:
+    app: sample-app
+spec:
+  selector:
+    app: sample-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# Generates steady traffic so the metrics have signal.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-load
+  namespace: sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-load
+  template:
+    metadata:
+      labels:
+        app: sample-load
+    spec:
+      containers:
+        - name: load
+          image: curlimages/curl:8.10.1
+          command: ["/bin/sh", "-c"]
+          args:
+            # Four independent loops with short timeouts: a hung connection to a
+            # terminating pod must never stall traffic to the new ones.
+            - |
+              hit() { while true; do
+                curl -s -o /dev/null --connect-timeout 1 --max-time 2 http://sample-app/api/$1
+                sleep 0.1
+              done; }
+              hit orders & hit orders & hit checkout & hit checkout &
+              wait
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi

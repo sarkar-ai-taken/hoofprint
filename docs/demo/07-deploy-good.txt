@@ -1,0 +1,7 @@
+$ ./bin/hoofprint deploy 2d8ced49-7388-4fbd-9815-868d58b39e34
+Deploy 2d8ced49-7388-4fbd-9815-868d58b39e34
+  sample/sample-app Deployment in kind-hoofprint (tier: workload)
+  observed 2026-10-31T05:56:39Z by agent agent-kind-hoofprint
+  revision 9b1d3a7 -> c47e2f0
+  image app: hoofprint/sample-app:sha-9b1d3a7 -> hoofprint/sample-app:sha-c47e2f0
+  verdict 7a1493c7 [stats] PASS (100%): no regressions. Improved: p99_latency_seconds -90%, requests_per_second +270%. Unchanged: error_rate

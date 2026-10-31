@@ -1,0 +1,17 @@
+$ ./bin/hoofprint explain eee396f2-1534-415c-9e51-662b05ce017d
+Verdict eee396f2-1534-415c-9e51-662b05ce017d on deploy b097d386-ae9c-4973-bc87-8ee1eaeb5990
+  FAIL (confidence 100%) by stats at 2026-10-30T22:56:38-07:00
+
+  1 critical metric(s) regressed (p99_latency_seconds). Worst: p99_latency_seconds moved up (median 0.0479 -> 0.497, +939%, p=1.65e-05, delta=1.00)
+
+Evidence (4):
+  [metric] p99_latency_seconds      FAIL   0.0479 -> 0.497 (+939%)  p=1.65e-05  delta=+1.00  n=13/13  (lower is better, critical)
+           before 22:54:13..22:55:13   after 22:55:33..22:56:33
+           histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{namespace="sample", service="sample-app"}[30s])))
+  [metric] error_rate               PASS   0 -> 0 (+0%)  p=1  delta=+0.00  n=13/13  (lower is better, critical)
+           before 22:54:13..22:55:13   after 22:55:33..22:56:33
+           (sum(rate(http_requests_total{namespace="sample", service="sample-app", code=~"5.."}[30s])) or vector(0)) / sum(rate(http_requests_total{namespace="sample", service="sample-app"}[30s]))
+  [metric] requests_per_second      FAIL   34 -> 9.4 (-72%)  p=1.65e-05  delta=-1.00  n=13/13  (higher is better)
+           before 22:54:13..22:55:13   after 22:55:33..22:56:33
+           sum(rate(http_requests_total{namespace="sample", service="sample-app"}[30s]))
+  [change] image app: hoofprint/sample-app:sha-3140f8e -> hoofprint/sample-app:sha-9b1d3a7

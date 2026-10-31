@@ -1,0 +1,51 @@
+# Tier 2 path: the same app as an Argo Rollout with a canary strategy.
+# Apply instead of deployment.yaml's Deployment (keep the Service and load gen).
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: sample-app
+  namespace: sample
+  labels:
+    app: sample-app
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: sample-app
+  strategy:
+    canary:
+      steps:
+        - setWeight: 25
+        - pause: {duration: 5m}
+        - setWeight: 50
+        - pause: {duration: 5m}
+  template:
+    metadata:
+      labels:
+        app: sample-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+        - name: app
+          image: hoofprint/sample-app:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: APP_VERSION
+              value: "v1"
+            - name: INJECT_LATENCY_MS
+              value: "0"
+            - name: INJECT_ERROR_RATE
+              value: "0"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi

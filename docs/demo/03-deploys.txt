@@ -1,0 +1,3 @@
+$ ./bin/hoofprint deploys
+ID        OBSERVED  CLUSTER         NAMESPACE  KIND        NAME        TIER      REVISION          IMAGE
+b097d386  4s ago    kind-hoofprint  sample     Deployment  sample-app  workload  3140f8e..9b1d3a7  hoofprint/sample-app:sha-9b1d3a7

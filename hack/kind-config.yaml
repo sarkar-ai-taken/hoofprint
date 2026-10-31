@@ -1,0 +1,11 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: hoofprint
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # hoofprint-api HTTP and gRPC, when installed in-cluster via the chart
+      - containerPort: 30080
+        hostPort: 30080
+      - containerPort: 30090
+        hostPort: 30090

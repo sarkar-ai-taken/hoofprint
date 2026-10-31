@@ -1,0 +1,7 @@
+$ ./bin/hoofprint deploy b097d386-ae9c-4973-bc87-8ee1eaeb5990
+Deploy b097d386-ae9c-4973-bc87-8ee1eaeb5990
+  sample/sample-app Deployment in kind-hoofprint (tier: workload)
+  observed 2026-10-31T05:55:13Z by agent agent-kind-hoofprint
+  revision 3140f8e -> 9b1d3a7
+  image app: hoofprint/sample-app:sha-3140f8e -> hoofprint/sample-app:sha-9b1d3a7
+  verdict eee396f2 [stats] FAIL (100%): 1 critical metric(s) regressed (p99_latency_seconds). Worst: p99_latency_seconds moved up (median 0.0479 -> 0.497, +939%, p=1.65e-05, delta=1.00)

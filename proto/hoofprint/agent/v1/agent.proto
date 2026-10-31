@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package hoofprint.agent.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// AgentService is the single outbound connection an agent (delegate) holds to
+// the control plane. The agent dials; the control plane never dials in
+// (ADR-0004). The first message on the stream must be a Register.
+service AgentService {
+  rpc Connect(stream AgentMessage) returns (stream ControlMessage);
+}
+
+message AgentMessage {
+  oneof msg {
+    Register register = 1;
+    Heartbeat heartbeat = 2;
+    WorkAck work_ack = 3;
+    WorkEvent work_event = 4;
+    DeployEvent deploy_event = 5;
+  }
+}
+
+message ControlMessage {
+  oneof msg {
+    Registered registered = 1;
+    WorkItem work_item = 2;
+    Ping ping = 3;
+  }
+}
+
+message Register {
+  // Stable id chosen by the agent (persisted across restarts where possible).
+  string agent_id = 1;
+  string cluster = 2;
+  string version = 3;
+  // e.g. "kubernetes", "argo-rollouts", "flagger", "prometheus", "tekton".
+  repeated string capabilities = 4;
+  // Selector tags, e.g. cluster=prod-us, env=staging.
+  map<string, string> tags = 5;
+}
+
+message Registered {
+  string agent_id = 1;
+  int32 heartbeat_interval_seconds = 2;
+}
+
+message Heartbeat {
+  google.protobuf.Timestamp sent_at = 1;
+}
+
+message Ping {
+  google.protobuf.Timestamp sent_at = 1;
+}
+
+// WorkItem is a unit of work the control plane asks the agent to execute.
+// kind selects the handler; payload is kind-specific JSON.
+message WorkItem {
+  string id = 1;
+  string kind = 2;
+  bytes payload = 3;
+}
+
+message WorkAck {
+  string work_id = 1;
+}
+
+message WorkEvent {
+  string work_id = 1;
+  oneof event {
+    LogLine log = 2;
+    WorkStatus status = 3;
+    WorkResult result = 4;
+  }
+}
+
+message LogLine {
+  google.protobuf.Timestamp at = 1;
+  string line = 2;
+}
+
+message WorkStatus {
+  string phase = 1;
+  string message = 2;
+}
+
+message WorkResult {
+  bool ok = 1;
+  string error = 2;
+  // kind-specific JSON.
+  bytes payload = 3;
+}
+
+enum Tier {
+  TIER_UNSPECIFIED = 0;
+  // Any Deployment/StatefulSet/DaemonSet pod-template change.
+  TIER_WORKLOAD = 1;
+  // Argo Rollouts or Flagger canary; baseline and canary observable side by side.
+  TIER_PROGRESSIVE = 2;
+  // Hoofprint-managed deploy stage (v1).
+  TIER_PIPELINE = 3;
+}
+
+message ContainerImage {
+  string container = 1;
+  string image = 2;
+}
+
+// DeployEvent is emitted by the agent's workload watcher when a workload's pod
+// template changes, whatever applied the change.
+message DeployEvent {
+  string id = 1;
+  string cluster = 2;
+  string namespace = 3;
+  // Deployment, StatefulSet, DaemonSet, Rollout, Canary.
+  string kind = 4;
+  string name = 5;
+  Tier tier = 6;
+  // Controller that is driving this change if detected: argo-rollouts, flagger.
+  string controller = 7;
+  repeated ContainerImage images_before = 8;
+  repeated ContainerImage images_after = 9;
+  string template_hash_before = 10;
+  string template_hash_after = 11;
+  // Best-effort git revision parsed from the image tag or pod-template
+  // annotations; empty if none found.
+  string revision_before = 12;
+  string revision_after = 13;
+  map<string, string> labels = 14;
+  map<string, string> annotations = 15;
+  google.protobuf.Timestamp observed_at = 16;
+}

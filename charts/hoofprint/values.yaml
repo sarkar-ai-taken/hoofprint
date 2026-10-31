@@ -1,0 +1,61 @@
+# Default: quickstart. Control plane + Postgres + agent, all in this cluster.
+# For a second cluster, set api.enabled=false, postgres.enabled=false and
+# point agent.controlPlane at the first cluster's gRPC endpoint.
+
+image:
+  repository: ghcr.io/sarkar-ai-taken
+  tag: ""            # defaults to .Chart.AppVersion
+  pullPolicy: IfNotPresent
+
+# Shared secret agents present to the control plane. Required unless you set
+# agent.existingSecret. Generate one: openssl rand -hex 24
+agentToken: ""
+
+api:
+  enabled: true
+  replicas: 1
+  logLevel: info
+  service:
+    type: ClusterIP
+    httpPort: 8080
+    grpcPort: 9090
+    # Set for kind's extraPortMappings in hack/kind-config.yaml:
+    # type: NodePort, httpNodePort: 30080, grpcNodePort: 30090
+    httpNodePort: null
+    grpcNodePort: null
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {memory: 512Mi}
+  # Overrides the DSN built from the postgres section.
+  databaseURL: ""
+
+postgres:
+  # Bundled single-node Postgres for the quickstart. Bring your own in prod.
+  enabled: true
+  image: postgres:16-alpine
+  database: hoofprint
+  user: hoofprint
+  password: hoofprint
+  storage: 5Gi
+  storageClass: ""
+
+agent:
+  enabled: true
+  # Name reported to the control plane; also the default agent id.
+  cluster: ""
+  tags: {}              # env: prod, region: us-east-1
+  # host:port of the control plane. Empty = the in-cluster api service.
+  controlPlane: ""
+  insecure: true        # in-cluster traffic; set false + TLS at the ingress for remote
+  # Name of an existing Secret with key "token" instead of agentToken above.
+  existingSecret: ""
+  namespaces: ""        # comma-separated; empty = all
+  prometheusURL: ""     # e.g. http://prometheus-kube-prometheus-prometheus.monitoring:9090
+  logLevel: info
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {memory: 256Mi}
+
+serviceAccount:
+  create: true
+  name: ""

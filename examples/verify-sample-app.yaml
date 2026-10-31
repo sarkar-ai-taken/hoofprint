@@ -1,0 +1,38 @@
+# Verification gate config for examples/sample-app, scraped by
+# kube-prometheus-stack via the ServiceMonitor in examples/sample-app/k8s.
+#
+# Queries are Go templates over the observed deploy:
+#   {{.Namespace}} {{.Name}} {{.Kind}} {{.Cluster}} {{.Labels.<key>}}
+# Tier 1 compares the same workload for `window` before the change against
+# `window` after it, starting `settle` after the change landed.
+window: 5m
+settle: 1m
+step: 15s
+
+# Only verify these namespaces (empty = all non-system namespaces).
+namespaces: [sample]
+
+metrics:
+  - name: p99_latency_seconds
+    query: |
+      histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{namespace="{{.Namespace}}", service="{{.Name}}"}[30s])))
+    direction: lower
+    critical: true
+
+  - name: error_rate
+    query: |
+      (sum(rate(http_requests_total{namespace="{{.Namespace}}", service="{{.Name}}", code=~"5.."}[30s])) or vector(0))
+        / sum(rate(http_requests_total{namespace="{{.Namespace}}", service="{{.Name}}"}[30s]))
+    direction: lower
+    critical: true
+
+  - name: requests_per_second
+    query: |
+      sum(rate(http_requests_total{namespace="{{.Namespace}}", service="{{.Name}}"}[30s]))
+    direction: higher
+    critical: false
+
+judge:
+  alpha: 0.05       # p-value threshold
+  minEffect: 0.33   # smallest |Cliff's delta| that counts as a real shift
+  minSamples: 5     # per window; below this a metric is "unsure"

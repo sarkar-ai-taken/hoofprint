@@ -1,0 +1,10 @@
+/bin/
+*.test
+*.out
+coverage.*
+.DS_Store
+.idea/
+.vscode/
+/ui/node_modules/
+/ui/dist/
+/sample-app

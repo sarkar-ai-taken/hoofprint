@@ -1,0 +1,4 @@
+bin/
+.git/
+docs/
+ui/node_modules/

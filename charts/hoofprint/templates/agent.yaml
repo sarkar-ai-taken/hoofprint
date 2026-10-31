@@ -1,0 +1,98 @@
+{{- if .Values.agent.enabled }}
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "hoofprint.serviceAccountName" . }}
+  labels: {{- include "hoofprint.labels" . | nindent 4 }}
+---
+# Read-only in M0. Rollout pause/abort and `rollout undo` (M2) will add
+# narrowly scoped write verbs behind values flags.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "hoofprint.fullname" . }}-agent
+  labels: {{- include "hoofprint.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events", "namespaces", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["rollouts", "analysisruns", "experiments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["flagger.app"]
+    resources: ["canaries"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "hoofprint.fullname" . }}-agent
+  labels: {{- include "hoofprint.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "hoofprint.fullname" . }}-agent
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "hoofprint.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hoofprint.fullname" . }}-agent
+  labels:
+    {{- include "hoofprint.labels" . | nindent 4 }}
+    app.kubernetes.io/component: agent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "hoofprint.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "hoofprint.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: agent
+    spec:
+      serviceAccountName: {{ include "hoofprint.serviceAccountName" . }}
+      containers:
+        - name: agent
+          image: "{{ .Values.image.repository }}/hoofprint-agent:{{ include "hoofprint.tag" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --control-plane={{ include "hoofprint.controlPlane" . }}
+            - --cluster={{ required "agent.cluster is required" .Values.agent.cluster }}
+            - --log-level={{ .Values.agent.logLevel }}
+            {{- if .Values.agent.insecure }}
+            - --insecure
+            {{- end }}
+            {{- if .Values.agent.namespaces }}
+            - --namespaces={{ .Values.agent.namespaces }}
+            {{- end }}
+            {{- if .Values.agent.prometheusURL }}
+            - --prometheus-url={{ .Values.agent.prometheusURL }}
+            {{- end }}
+            {{- $tags := list }}
+            {{- range $k, $v := .Values.agent.tags }}{{ $tags = append $tags (printf "%s=%s" $k $v) }}{{ end }}
+            {{- if $tags }}
+            - --tags={{ join "," $tags }}
+            {{- end }}
+          env:
+            - name: HOOFPRINT_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hoofprint.tokenSecretName" . }}
+                  key: token
+          resources: {{- toYaml .Values.agent.resources | nindent 12 }}
+{{- end }}

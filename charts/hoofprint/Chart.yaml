@@ -1,0 +1,10 @@
+apiVersion: v2
+name: hoofprint
+description: The deploy gate for code nobody read. Umbrella chart installing the control plane and one agent in the same cluster (the quickstart shape), or just the agent against a remote control plane.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords: [kubernetes, delivery, canary, verification, argo-rollouts, flagger]
+home: https://github.com/sarkar-ai-taken/hoofprint
+sources:
+  - https://github.com/sarkar-ai-taken/hoofprint

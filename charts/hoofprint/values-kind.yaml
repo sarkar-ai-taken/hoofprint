@@ -1,0 +1,15 @@
+# helm upgrade --install hoofprint charts/hoofprint -n hoofprint --create-namespace -f charts/hoofprint/values-kind.yaml
+agentToken: dev-token
+image:
+  tag: dev
+agent:
+  cluster: kind-hoofprint
+  tags: {env: dev}
+  prometheusURL: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+api:
+  service:
+    type: NodePort
+    httpNodePort: 30080
+    grpcNodePort: 30090
+postgres:
+  storage: 1Gi

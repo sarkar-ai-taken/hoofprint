@@ -1,0 +1,16 @@
+# Only needed if you scrape via Prometheus Operator ServiceMonitors.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sample-app
+  namespace: sample
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: sample-app
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 5s

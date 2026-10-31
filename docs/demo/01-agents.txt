@@ -1,0 +1,3 @@
+$ ./bin/hoofprint agents
+ID                    CLUSTER         STATUS  VERSION        LAST HEARTBEAT  CAPABILITIES                                             TAGS
+agent-kind-hoofprint  kind-hoofprint  online  3140f8e-dirty  1s ago          argo-rollouts,kubernetes,prometheus,prometheus-operator  env=dev

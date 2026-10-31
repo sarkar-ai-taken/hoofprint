@@ -1,0 +1,4 @@
+$ ./bin/hoofprint workloads agent-kind-hoofprint sample
+NAMESPACE  KIND        NAME         READY  REVISION  IMAGES
+sample     Deployment  sample-app   2/2    3140f8e   hoofprint/sample-app:sha-3140f8e
+sample     Deployment  sample-load  1/1              curlimages/curl:8.10.1

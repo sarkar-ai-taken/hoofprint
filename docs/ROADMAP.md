@@ -4,22 +4,23 @@ Solo-dev estimates. Re-cut around verification as the product; the delivery plat
 
 ## v0 — Verification gate on any Kubernetes cluster
 
-### M0 — Foundation (weeks 1–2)
-- [ ] Repo scaffold, Go module, Helm chart skeleton, kind dev script with Argo CD + Rollouts + Prometheus preinstalled
-- [ ] Postgres schema: clusters, agents, rollouts, verdicts, evidence
-- [ ] gRPC agent protocol: register, heartbeat, work stream (ADR-0004)
-- [ ] `hoofprint-agent` skeleton: connects, registers, lists workloads + detects Rollouts/Flagger presence
-- [ ] Sample app with injectable latency/error/memory regressions
+### M0 — Foundation (weeks 1–2) — done 2026-10-30
+- [x] Repo scaffold, Go module, Helm chart skeleton, kind dev script with Argo CD + Rollouts + Prometheus preinstalled
+- [x] Postgres schema: agents, deploys, verdicts, evidence (embedded migrations; memory store for dev/tests; shared conformance suite)
+- [x] gRPC agent protocol: register, heartbeat, work stream (ADR-0004); registry with offline reaper; dispatcher behind `Executor`
+- [x] `hoofprint-agent` skeleton: connects with reconnect/backoff, registers, lists workloads, detects Rollouts/Flagger/Argo CD/Tekton/Prometheus Operator CRDs
+- [x] Sample app with injectable latency/error/memory/CPU regressions
+- [x] Pulled forward from M1: workload watcher (tier 1 + Rollouts/Flagger tier 2 detection), image tag → revision, Mann-Whitney judge in Go, CLI `agents` / `workloads` / `deploys` / `deploy` / `verdicts` / `explain`
 
 ### M1 — Evidence + statistical verdict (weeks 3–6)
-- [ ] Workload watcher (tier 1): informers on Deployments/StatefulSets/DaemonSets, emits `DeployEvent` on pod-template change
-- [ ] Rollouts + Flagger watcher (tier 2): canary step events, baseline/canary pod selection
-- [ ] Evidence collectors on agent: Prometheus (pre/post window for tier 1, canary vs baseline for tier 2), k8s events, pod logs (Loki or direct), OTel trace samples
-- [ ] Image tag → commit SHA resolution; git diff fetch (GitHub app) for the commit range
-- [ ] Tier 1 judge: Mann-Whitney canary comparison over declared metrics, in Go
-- [ ] Verdict stored with evidence bundle
-- [ ] CLI: `hoofprint verdicts`, `hoofprint explain <rollout>`
-- **Demo:** inject latency → statistical fail → verdict visible in CLI
+- [x] Workload watcher (tier 1): informers on Deployments/StatefulSets/DaemonSets, emits `DeployEvent` on pod-template change
+- [ ] Rollouts + Flagger watcher (tier 2): template change detection done; canary step events, baseline/canary pod selection remaining
+- [ ] Evidence collectors on agent: Prometheus pre/post window for tier 1 (done, `prometheus.query_range`); canary vs baseline for tier 2, k8s events, pod logs (Loki or direct), OTel trace samples
+- [ ] Image tag → commit SHA resolution (done); git diff fetch (GitHub app) for the commit range
+- [x] Tier 1 judge: Mann-Whitney canary comparison over declared metrics, in Go (`internal/verify/stats`), wired to Prometheus through the agent (`internal/verify`)
+- [x] Verdict stored with evidence bundle
+- [x] CLI: `hoofprint verdicts`, `hoofprint explain <verdict>`
+- [x] **Demo:** inject latency → statistical fail → verdict visible in CLI (`make demo`, screenshots in README)
 
 ### M2 — LLM verdict + action (weeks 7–10)
 - [ ] Evidence bundle → prompt builder, pluggable model backend (Anthropic, OpenAI-compatible, local)
